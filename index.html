@@ -211,17 +211,19 @@ function pair(d){const t=d.heads.findIndex((h,i)=>d.kinds[i]=='num'&&/target|ang
 // Saldo & ringkasan diambil langsung dari sheet Rekap (dicari berdasarkan label di kolom A).
 // Kolom "Akun" di Pemasukan/Pengeluaran hanya metode pembayaran, tidak dihitung sebagai saldo.
 const R=re=>(D.rekap||[]).find(x=>re.test(x.label));
-const rv=x=>x&&x.v!=null?x.v:0;
+// Ubah nilai apa pun (angka atau teks "Rp 41.640" / "41.640,5") jadi angka murni.
+const nn=x=>{if(x==null||x==='')return null;if(typeof x=='number')return x;const t=String(x).replace(/[^\d,.\-]/g,'').replace(/\./g,'').replace(',','.'),v=parseFloat(t);return isNaN(v)?null:v};
+const rv=x=>x&&nn(x.v)!=null?nn(x.v):0;
 function hero(){const a=R(/^saldo aktual/i),ac=R(/tanggal acuan/i),btn=el('button',{className:'ghost',type:'button',textContent:'Segarkan'});
  btn.onclick=()=>{st('Memuat data...');call('getData',[PIN],d=>{D=norm(d);editing=null;fillMon();st('Data diperbarui.');draw()})};
- const mb=R(/m-?banking/i),mi=el('input',{type:'number',required:true,step:1,inputMode:'numeric',value:mb&&mb.v!=null?Math.round(mb.v):''}),sv=el('button',{className:'go',type:'submit',textContent:'Simpan saldo M-Banking'}),
+ const mb=R(/^(saldo\s+)?m-?banking/i)||R(/m-?banking/i),mi=el('input',{type:'number',required:true,step:1,inputMode:'numeric',value:mb&&mb.v!=null?Math.round(mb.v):''}),sv=el('button',{className:'go',type:'submit',textContent:'Simpan saldo M-Banking'}),
  mf=el('form',{className:'fm sub'},[fld('Saldo di M-Banking (Rp)',mi),el('div',{className:'hint',textContent:'Mengubah sel saldo M-Banking di sheet Rekap. Saldo aktual, Cash, dan Bebas setelah rencana ikut berubah otomatis.'}),sv]);
  mf.onsubmit=e=>{e.preventDefault();sv.disabled=true;st('Menyimpan...');call('setMbanking',[mi.value,PIN],n=>{D=norm(n);st('Saldo M-Banking tersimpan.');draw()},x=>{sv.disabled=false;fail(x)})};
  const panel=CAN?mf:el('div',{className:'hint',style:'margin-top:12px',textContent:'Ubah saldo aktif setelah PIN diatur (Script properties \u203a DASH_PIN).'});panel.hidden=true;
  const eb=el('button',{className:'ghost',type:'button',textContent:'Ubah M-Banking',onclick:()=>{panel.hidden=!panel.hidden}});eb.hidden=!mb;
  const chips=el('div',{className:'chips'});
  // Saldo cash = saldo aktual - saldo M-Banking (dihitung otomatis di dashboard)
- const mbv=mb&&mb.v!=null?mb.v:null,cash=rv(a)-(mbv||0);
+ const mbv=mb&&nn(mb.v)!=null?nn(mb.v):null,cash=Math.round(rv(a))-Math.round(mbv||0);
  if(mbv!=null){
   chips.append(
    el('span',{className:'chip',textContent:'M-Banking \u00b7 '+rp(mbv)}),
