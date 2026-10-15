@@ -220,6 +220,9 @@ function hero(){const a=R(/^saldo aktual/i),ac=R(/tanggal acuan/i),btn=el('butto
  const panel=CAN?mf:el('div',{className:'hint',style:'margin-top:12px',textContent:'Ubah saldo aktif setelah PIN diatur (Script properties \u203a DASH_PIN).'});panel.hidden=true;
  const eb=el('button',{className:'ghost',type:'button',textContent:'Ubah M-Banking',onclick:()=>{panel.hidden=!panel.hidden}});eb.hidden=!mb;
  const chips=el('div',{className:'chips'});
+ // Saldo cash = Total Pemasukan - Total Pengeluaran (diambil dari sheet Rekap)
+ const tIn=R(/^total pemasukan/i),tOut=R(/^total pengeluaran/i);
+ if(tIn&&tOut&&tIn.v!=null&&tOut.v!=null){const cash=tIn.v-tOut.v;chips.append(el('span',{className:'chip '+(cash<0?'out':''),textContent:'Cash \u00b7 '+rp(cash)}))}
  [[/m-?banking/i,'M-Banking'],[/komitmen/i,'Komitmen belanja'],[/target tabungan/i,'Target tabungan'],[/saldo bebas/i,'Bebas setelah rencana']].forEach(([re,n])=>{const x=R(re);if(x&&x.v!=null)chips.append(el('span',{className:'chip '+(x.v<0?'out':''),textContent:n+' \u00b7 '+rp(x.v)}))});
  if(!chips.childNodes.length)chips.append(el('span',{className:'lbl',textContent:D.rekap?'Isi sheet Rekap belum terbaca.':'Sheet Rekap tidak terbaca'+(D.rekapErr?': '+D.rekapErr:'.')}));
  return el('div',{className:'card g hero'},[el('div',{className:'hrow'},[el('div',{},[el('div',{className:'lbl',textContent:'Saldo aktual'+(ac&&ac.t?' \u00b7 per '+ac.t:'')}),num(rv(a),rv(a)<0?'out':'','big')]),el('div',{className:'acts',style:'margin-top:0'},[btn,eb])]),chips,panel])}
